@@ -1,5 +1,5 @@
 {
-  "featuredTitle": "DPS wallet Promotion",
+  "featuredTitle": "Heppening Now",
   "categories": [
     {
       "id": 1,
@@ -169,10 +169,10 @@
       "url": "https://t.me/push?start=1",
       "icon": "https://static.mytonwallet.org/explore-icons/push.jpg",
       "extendedIcon": "https://static.mytonwallet.org/explore-icons/push_extended2.png",
+      "description": "Type @push nft or enter the amount in any Telegram chat for instant onchain transfers.",
       "badgeText": "NEW",
       "withBorder": true,
-      "name": "@push",
-      "description": "Type @push nft or enter the amount in any Telegram chat for instant onchain transfers.",
+      "name": "Digital Payment Service (DPS)",
       "canBeRestricted": false,
       "isExternal": true,
       "isFeatured": true,

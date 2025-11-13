@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 4355;
 // ✅ Read catalog.json manually
 const catalogPath = `${__dirname}/catalog.json`;
 let catalog = {};
+
 try {
   const data = fs.readFileSync(catalogPath, "utf-8");
   catalog = JSON.parse(data);
@@ -20,12 +21,19 @@ try {
   console.error("⚠️ Failed to load catalog.json:", err.message);
   catalog = { error: "Catalog file missing or invalid JSON" };
 }
+// 🔄 Watch for file changes and auto reload
+fs.watchFile(catalogPath, () => {
+  try {
+    const data = fs.readFileSync(catalogPath, "utf-8");
+    catalog = JSON.parse(data);
+    console.log("🔄 catalog.json reloaded");
+  } catch (err) {
+    console.error("⚠️ catalog reload failed:", err.message);
+  }
+});
 
-// --------------------
 // Unique Error Logging
-// --------------------
 const logFilePath = `${__dirname}/error.log`;
-
 function logUniqueError(method, path, statusCode, errorMsg) {
   try {
     const entry = `[${new Date().toISOString()}] ${method}: ${path} ❌ ${
@@ -42,10 +50,7 @@ function logUniqueError(method, path, statusCode, errorMsg) {
     console.error("⚠️ Failed to write log:", err.message);
   }
 }
-
-// --------------------
 // Allowed Origins
-// --------------------
 const allowedOrigins = [
   "http://localhost:4321",
   "http://127.0.0.1:4321",
@@ -60,26 +65,28 @@ const allowedOrigins = [
   "https://walletdps.netlify.app",
   "https://walletdps.netlify.com",
 ];
-
-// --------------------
 // Catalog Handler
-// --------------------
 function handleCatalogRequest(req, res) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers":
+      "x-app-env, X-App-Env, X-App-Version, X-Requested-With, Content-Type, Authorization, Origin, Accept, X-App-Clientid, x-auth-token, X-Auth-Token, Referer, User-Agent, Cache-Control, Pragma",
+    "Access-Control-Max-Age": "86400",
+  };
+
   try {
-    res.writeHead(200, { "Content-Type": "application/json" });
+    res.writeHead(200, {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    });
     res.end(JSON.stringify(catalog, null, 2));
     console.log(`🟢 Catalog served: ${req.method} ${req.url}`);
   } catch (err) {
-    console.error(`🔴 Failed to serve catalog: ${err.message}`);
-    logUniqueError(req.method, req.url, 500, err.message);
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Failed to fetch catalog" }));
+
   }
 }
-
-// --------------------
-// HTTP Server
-// --------------------
+//  creat server for node.js 
 const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const incomingPath = parsedUrl.pathname.toLowerCase();
@@ -87,7 +94,7 @@ const server = http.createServer(async (req, res) => {
   const allowOrigin = allowedOrigins.find((o) => origin.startsWith(o)) || "*";
 
   const corsHeaders = {
-    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers":
       "x-app-env, X-App-Env, X-App-Version, X-Requested-With, Content-Type, Authorization, Origin, Accept, X-App-Clientid, x-auth-token, X-Auth-Token, Referer, User-Agent, Cache-Control, Pragma",
