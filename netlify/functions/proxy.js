@@ -2,13 +2,16 @@
 
 import fs from "fs";
 import url from "url";
-import path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
-// --- Fix for Netlify: Use path.dirname(import.meta.url) safely ---
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+// -------- FIX: declare only once --------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+// ----------------------------------------
 
 // Load catalog.json
-const catalogPath = path.join(__dirname, "catalog.json");
+const catalogPath = `${__dirname}/catalog.json`;
 let catalog = {};
 
 try {
@@ -33,7 +36,9 @@ const allowedOrigins = [
 // CORS
 function getCorsHeaders(origin) {
   return {
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : "*",
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+      ? origin
+      : "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "*",
     "Access-Control-Max-Age": "86400",
@@ -74,8 +79,8 @@ export async function handler(event) {
   const proxyPath = pathname
     .replace("/.netlify/functions/proxy", "")
     .replace("/proxy", "");
-
   const targetUrl = `https://api.mytonwallet.org${proxyPath}${search}`;
+
   console.log("➡️ forwarding:", targetUrl);
 
   try {
