@@ -1,11 +1,12 @@
 // netlify/functions/proxy.js
 
 import fs from "fs";
-import url from "url";
 import path from "path";
+import { fileURLToPath } from "url"; // درست طریقہ
 
-// Netlify ESM automatically provides import.meta.url, dirname from URL:
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+// ===== Safe __dirname for ESM =====
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ===== Load catalog.json =====
 let catalog = {};
@@ -43,7 +44,7 @@ function corsHeaders(origin) {
 
 // ===== MAIN HANDLER =====
 export async function handler(event) {
-  const parsed = url.parse(event.rawUrl, true);
+  const parsed = new URL(event.rawUrl);
   const pathname = parsed.pathname;
   const query = parsed.search || "";
   const origin = event.headers.origin || "";
