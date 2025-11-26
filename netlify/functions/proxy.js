@@ -2,15 +2,13 @@
 
 import fs from "fs";
 import url from "url";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import path from "path";
 
-// ------------------- FIX: Declare once only -------------------
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// --- Fix for Netlify: Use path.dirname(import.meta.url) safely ---
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-// ------------------- Load catalog.json -------------------
-const catalogPath = `${__dirname}/catalog.json`;
+// Load catalog.json
+const catalogPath = path.join(__dirname, "catalog.json");
 let catalog = {};
 
 try {
@@ -22,7 +20,7 @@ try {
   catalog = { error: "Catalog missing or invalid JSON" };
 }
 
-// ------------------- Allowed Origins -------------------
+// Allowed Origins
 const allowedOrigins = [
   "*",
   "https://tonapi.netlify.app",
@@ -32,19 +30,16 @@ const allowedOrigins = [
   "http://127.0.0.1:8888",
 ];
 
-// ------------------- CORS Headers -------------------
+// CORS
 function getCorsHeaders(origin) {
   return {
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
-      ? origin
-      : "*",
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "*",
     "Access-Control-Max-Age": "86400",
   };
 }
 
-// ------------------- Main Handler -------------------
 export async function handler(event) {
   const parsed = url.parse(event.rawUrl, true);
   const pathname = parsed.pathname;
@@ -52,7 +47,7 @@ export async function handler(event) {
   const origin = event.headers.origin || "";
   const cors = getCorsHeaders(origin);
 
-  // Preflight
+  // OPTIONS
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 200, headers: cors, body: "" };
   }
@@ -75,13 +70,13 @@ export async function handler(event) {
     return { statusCode: 200, headers: cors, body: "" };
   }
 
-  // Proxy: Forward request to MyTonWallet API
+  // Proxy request
   const proxyPath = pathname
     .replace("/.netlify/functions/proxy", "")
     .replace("/proxy", "");
 
   const targetUrl = `https://api.mytonwallet.org${proxyPath}${search}`;
-  console.log("➡️ Forwarding:", targetUrl);
+  console.log("➡️ forwarding:", targetUrl);
 
   try {
     const response = await fetch(targetUrl, {
@@ -100,8 +95,7 @@ export async function handler(event) {
       statusCode: response.status,
       headers: {
         ...cors,
-        "Content-Type":
-          response.headers.get("content-type") || "application/json",
+        "Content-Type": response.headers.get("content-type") || "application/json",
       },
       body: await response.text(),
     };
